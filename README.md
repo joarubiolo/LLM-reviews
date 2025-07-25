@@ -100,3 +100,134 @@
   - Evaluar respuestas generadas con métricas cualitativas.
   
   - Mitigar alucinaciones con RAG + verificaciones.
+
+
+
+
+# Tokenización y Preprocesamiento de Texto (BPE, WordPiece)
+  La tokenización es un paso fundamental en NLP que consiste en dividir el texto en unidades más pequeñas (tokens) para que los modelos puedan procesarlo.
+  Los métodos modernos como BPE (Byte-Pair Encoding) y WordPiece son ampliamente usados en modelos como GPT, BERT y otros LLMs.
+  
+  1. ¿Qué es la Tokenización?
+  Objetivo: Convertir texto en tokens (palabras, subpalabras o caracteres) para representarlo numéricamente.
+  
+  Desafíos:
+  
+  - Idiomas sin espacios (ej: chino).
+  
+  - Palabras raras o técnicas (ej: "anticonstitucionalmente").
+  
+  - Manejo de signos de puntuación, emojis, etc.
+  
+  Tipos de Tokenización
+  - Método	Ejemplo ("unhappiness")	Tokens
+  - Word-Level	Basado en palabras	["un", "happiness"]
+  - Character-Level	Por caracteres	["u", "n", "h", "a", "p", "p", "i", "n", "e", "s", "s"]
+  - Subword-Level (BPE/WordPiece)	Balance entre palabras y caracteres	["un", "happiness"] o ["un", "happ", "iness"]
+  
+  2. Tokenización por Subpalabras: BPE y WordPiece
+  Byte-Pair Encoding (BPE)
+  - Usado en: GPT, RoBERTa, LLaMA.
+  
+  Funcionamiento:
+  
+  - Parte del vocabulario inicial como caracteres individuales.
+  
+  - Itera combinando los pares más frecuentes hasta alcanzar un tamaño de vocabulario fijo.
+  
+  Ejemplo:
+  Texto: "low lower newest"
+  
+  Paso 1: l o w l o w e r n e w e s t
+  
+  Paso 2: Fusiona "lo" (par más frecuente) → lo w lo w e r n e w e s t
+  
+  Paso 3: Fusiona "low" → low low e r n e w e s t
+  
+  WordPiece
+  - Usado en: BERT, DistilBERT.
+  
+  - Similar a BPE, pero elige fusiones basadas en probabilidad (no frecuencia).
+  
+  - Usa el criterio de maximizar la verosimilitud del lenguaje.
+  
+  Ejemplo:
+  Si "happ" y "iness" aparecen juntas con frecuencia, se fusionan en "happiness".
+  
+  3. Preprocesamiento de Texto
+  Antes de tokenizar, se aplican técnicas como:
+  
+  - Normalización:
+  
+  - Convertir a minúsculas.
+  
+  - Eliminar acentos ("café" → "cafe").
+  
+  - Expandir contracciones ("don't" → "do not").
+  
+  Filtrado:
+  
+  - Remover stopwords ("the", "and").
+  
+  - Eliminar URLs, hashtags, caracteres especiales.
+  
+  - Stemming/Lemmatización (opcional para LLMs): "running" → "run".
+  
+  4. Pasos Prácticos para Implementar Tokenización
+  Opción 1: Usando Hugging Face Tokenizers
+  *python*
+  ```
+  from transformers import AutoTokenizer
+  
+  # Cargar tokenizer (ej: BPE en GPT-2)
+  tokenizer = AutoTokenizer.from_pretrained("gpt2")
+  
+  text = "¿Cómo tokenizar esto?"
+  tokens = tokenizer.tokenize(text)  # ["¿", "C", "ómo", "token", "izar", "esto", "?"]
+  ids = tokenizer.encode(text)      # [16968, 193, 4321, 1152, 534, 1026, 35]
+  ```
+  Opción 2: Implementar BPE desde cero
+  *python*
+  ```
+  from tokenizers import Tokenizer, models, trainers
+  
+  tokenizer = Tokenizer(models.BPE())
+  trainer = trainers.BpeTrainer(special_tokens=["[UNK]", "[CLS]", "[SEP]"])
+  
+  # Entrenar con un corpus de texto
+  corpus = ["lista de textos para entrenar..."]
+  tokenizer.train_from_iterator(corpus, trainer)
+  
+  # Tokenizar
+  output = tokenizer.encode("Texto de ejemplo")
+  print(output.tokens)  # ["Texto", "de", "ejemplo"]
+  ```
+  Opción 3: Comparar BPE vs. WordPiece
+  *python*
+  ```
+  from transformers import BertTokenizer, GPT2Tokenizer
+  
+  # WordPiece (BERT)
+  bert_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+  print(bert_tokenizer.tokenize("unhappiness"))  # ["un", "##happiness"]
+  
+  # BPE (GPT-2)
+  gpt2_tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+  print(gpt2_tokenizer.tokenize("unhappiness"))  # ["un", "happiness"]
+  ```
+
+  5. Ejercicios Recomendados
+  Tokenizar un dataset (ej: tweets) y comparar resultados con BPE/WordPiece.
+  
+  Entrenar un tokenizer BPE desde cero en un dominio específico (ej: código Python).
+  
+  Preprocesar texto para un LLM: normalizar, limpiar y tokenizar un corpus de Wikipedia.
+  
+  6. Recursos Adicionales
+  Paper original de BPE
+  
+  Documentación de Hugging Face Tokenizers
+  
+  Tutorial de tokenización con código
+  
+  
